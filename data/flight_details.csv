@@ -1,0 +1,76 @@
+1,Singapore Airlines,SQ,Singapore,KL,Economy,343
+2,Air Asia,AK,Singapore,KL,Economy,44
+3,Jet Star,JQ,Singapore,KL,Economy,48
+4,Tiger Airlines,TR,Singapore,KL,Economy,85
+5,Malaysian Airlines,MH,Singapore,KL,Economy,262
+6,Srilankan Airlines,UL,Singapore,KL,Business,363
+7,Singapore Airlines,SQ,Singapore,KL,Business,468
+8,Silk Air,MI,Singapore,KL,Business,449
+9,Malaysian Airlines,MH,Singapore,KL,Business,433
+10,Royal Brunei Airlines,SQ,Singapore,KL,Business,1379
+11,Qantas Airways,QF,Singapore,Sydney,Economy,580
+12,China Eastern Airlines,MU,Singapore,Sydney,Economy,743
+13,Garuda Indonesia,GA,Singapore,Sydney,Economy,795
+14,Singapore Airlines,SQ,Singapore,Sydney,Economy,954
+15,Garuda Indonesia,GA,Singapore,Sydney,Business,3566
+16,Cathay Pacific,CX,Singapore,Sydney,Business,4165
+17,Singapore Airlines,SQ,Singapore,Sydney,Business,5363
+18,Malaysian Airlines,MH,Singapore,Sydney,Business,4485
+19,Jet Star,JQ,Singapore,Jakarta,Economy,27
+20,Air Asia,AK,Singapore,Jakarta,Economy,66
+21,Philippine Airline,PR,Singapore,Jakarta,Economy,167
+22,Tiger Airlines,TR,Singapore,Jakarta,Economy,57
+23,Philippine Airline,PR,Singapore,Jakarta,Business,403
+24,Lufthansa,LH,Singapore,Jakarta,Business,646
+25,Garuda Indonesia,GA,Singapore,Jakarta,Business,879
+26,Singapore Airlines,SQ,Singapore,Jakarta,Business,1272
+27,Tiger Airlines,TR,Singapore,Chennai,Economy,318
+28,Silk air,MI,Singapore,Chennai,Economy,501
+29,Srilankan Airlines,UL,Singapore,Chennai,Economy,506
+30,Jet Airways,9W,Singapore,Chennai,Economy,520
+31,Malaysian Airlines,MH,Singapore,Chennai,Business,1930
+32,Singapore Airlines,SQ,Singapore,Chennai,Business,2200
+33,Silk Air,MI,Singapore,Chennai,Business,2100
+34,Jet Airways,9W,Singapore,Chennai,Business,2000
+35,Tiger Airlines,TR,KL,Chennai,Economy,351.19
+36,Air Asia,AK,KL,Chennai,Economy,237.18
+37,Jet Airways,9W,KL,Chennai,Economy,429
+38,Air India,AI,KL,Chennai,Economy,419.84
+39,Singapore Airlines,SQ,KL,Chennai,Business,1038.17
+40,Jet Airways,9W,KL,Chennai,Business,976.17
+41,Air Asia,AK,KL,Jakarta,Economy,106.11
+42,Garuda Indonesia,GA,KL,Jakarta,Economy,188.91
+43,Malaysian Airlines,MH,KL,Jakarta,Economy,479.35
+44,Gulf Air,GF,KL,Jakarta,Economy,592.11
+45,Garuda Indonesia,GA,KL,Jakarta,Business,665.76
+46,Malaysian Airlines,MH,KL,Jakarta,Business,767.29
+47,Singapore Airlines,SQ,KL,Sydney,Economy,1049.82
+48,Cathay Pacific,CX,KL,Sydney,Economy,1223.75
+49,Malaysian Airlines,MH,KL,Sydney,Economy,1729.31
+50,Emirates,EK,KL,Sydney,Economy,2053.04
+51,Garuda Indonesia,GA,KL,Sydney,Business,4406.5
+52,Malaysian Airlines,MH,KL,Sydney,Business,4652
+53,Vietnam Airlines,VN,KL,Sydney,Business,5463.39
+54,Singapore Airlines,SQ,KL,Sydney,Business,6070.9
+55,Malaysian Airlines,MH,Sydney,Chennai,Economy,1350.01
+56,Qantas Airways,QF,Sydney,Chennai,Economy,1394.46
+57,Singapore Airlines,SQ,Sydney,Chennai,Economy,1417.32
+58,Cathay Pacific,CX,Sydney,Chennai,Economy,1642.11
+59,Malaysian Airlines,MH,Sydney,Chennai,Business,6033.77
+60,Thai Airways,TG,Sydney,Chennai,Business,6480.81
+61,Singapore Airlines,SQ,Sydney,Chennai,Business,7282.18
+62,Qantas Airways,QF,Sydney,Chennai,Business,9066.53
+63,Singapore Airlines,SQ,Sydney,Jakarta,Economy,1098.55
+64,Malaysian Airlines,MH,Sydney,Jakarta,Economy,1217.93
+65,Qantas Airways,QF,Sydney,Jakarta,Economy,1297.94
+66,Philippine Airline,PR,Sydney,Jakarta,Economy,1510.03
+67,Qantas Airways,QF,Sydney,Jakarta,Business,4051.3
+68,Singapore Airlines,Sq,Sydney,Jakarta,Business,5060.95
+69,Malaysian Airlines,MH,Sydney,Jakarta,Business,5447.03
+70,Cathay Pacific,CX,Sydney,Jakarta,Business,7367.27
+71,Malaysian Airlines,MH,Chennai,Jakarta,Economy,910.2
+72,Singapore Airlines,SQ,Chennai,Jakarta,Economy,971.7
+73,Air India,AI,Chennai,Jakarta,Economy,975.6
+74,Emirates,EK,Chennai,Jakarta,Economy,1198.5
+75,Singapore Airlines,SQ,Chennai,Jakarta,Business,1603.8
+76,Emirates,EK,Chennai,Jakarta,Business,1687.2

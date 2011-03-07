@@ -1,0 +1,300 @@
+/*****************************************************************
+JADE - Java Agent DEvelopment Framework is a framework to develop 
+multi-agent systems in compliance with the FIPA specifications.
+Copyright (C) 2000 CSELT S.p.A. 
+
+GNU Lesser General Public License
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation, 
+version 2.1 of the License. 
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA  02111-1307, USA.
+ *****************************************************************/
+
+package ia.travelagency;
+
+import ia.travelagency.ontology.HotelDetail;
+import ia.travelagency.ontology.TravelAgencyOntology;
+import ia.travelagency.ontology.TravelDetail;
+import jade.content.ContentElement;
+import jade.content.ContentManager;
+import jade.content.lang.Codec;
+import jade.content.lang.sl.SLCodec;
+import jade.content.onto.Ontology;
+import jade.content.onto.basic.Action;
+import jade.core.Agent;
+import jade.core.behaviours.*;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
+import jade.proto.ContractNetResponder;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.FailureException;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
+import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.*;
+
+public class HotelAgent extends Agent {
+	
+	// This agent "speaks" the SL language
+	private Codec codec = new SLCodec();
+	// This agent "knows" the TravelAgencyOntology
+	private Ontology ontology = TravelAgencyOntology.getInstance();
+	private ContentManager manager = (ContentManager) getContentManager();
+
+	// Put agent initializations here
+	protected void setup() {
+
+		// Register the book-selling service in the yellow pages
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd.setName(getAID());
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("hotel-agent");
+		sd.setName("JADE-hotel-agent");
+		dfd.addServices(sd);
+		try {
+			DFService.register(this, dfd);
+		}
+		catch (FIPAException fe) {
+			fe.printStackTrace();
+		}
+		
+		System.out.println("Agent "+getLocalName()+" waiting for CFP...");
+		MessageTemplate template = MessageTemplate.and(
+				MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+				MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+
+		HotelContractNetResponder hotelContractNetResponder = new HotelContractNetResponder(this, template);
+		addBehaviour(hotelContractNetResponder);
+	}
+	
+	
+	/**
+	   Inner class OfferRequestsServer.
+	   This is the behaviour used by hotel-agent agents to serve incoming requests 
+	   for offer from travel agents.
+	   If the requested room is in the local catalog the hotel agent replies 
+	   with a PROPOSE message specifying the price. Otherwise a REFUSE message is
+	   sent back.
+	 */
+	class HotelContractNetResponder extends ContractNetResponder{ 
+
+		public HotelContractNetResponder(Agent a, MessageTemplate mt) {
+			super(a, mt);
+			manager.registerLanguage(codec);
+			manager.registerOntology(ontology);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+			System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName());
+
+			try {
+				TravelDetail travelDetail = extractTravelDetail(cfp);
+				ACLMessage reply = cfp.createReply();
+				HotelDetail hotelDetail = getHotelCost(travelDetail);
+				if (hotelDetail != null) {
+					// The requested book is available for sale. Reply with the price
+					reply.setPerformative(ACLMessage.PROPOSE);
+					fillHotelDetailDetail(reply, hotelDetail);
+					System.out.println("Preparing reply:: " + reply);
+					return reply;
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			// The requested book is NOT available for sale.
+			throw new RefuseException("not-available 2");
+		}
+
+
+		@Override
+		protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+			System.out.println("Agent "+getLocalName()+": Proposal accepted");
+			
+			// ACCEPT_PROPOSAL Message received. Process it
+			try {
+				TravelDetail travelDetail = extractTravelDetail(accept);
+				ACLMessage inform = accept.createReply();
+				System.out.println("Informing travel agent, Hotel booked by hotel-agent :"+accept.getSender().getName());
+
+				boolean retVal = bookHotel(travelDetail);
+				if (retVal) {
+					inform.setPerformative(ACLMessage.INFORM);
+					inform.setContent("inform-hotel-booked");
+					return inform;
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			// The requested book has been sold to another buyer in the meanwhile .
+			throw new FailureException("unexpected-error");
+		}
+
+		protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
+			System.out.println("Agent "+getLocalName()+": Proposal rejected");
+		}
+	}
+
+	// Put agent clean-up operations here
+	protected void takeDown() {
+		// Deregister from the yellow pages
+		try {
+			DFService.deregister(this);
+		}
+		catch (FIPAException fe) {
+			fe.printStackTrace();
+		}
+		// Printout a dismissal message
+		System.out.println("takeDown():: Hotel-agent "+getAID().getName()+" terminating.");
+	}
+	
+	private HotelDetail getHotelCost(TravelDetail travelDetail) {
+		HotelDetail hotelDetail = null;
+		try {
+		    long toDate = TravelDetail.getLongDate(travelDetail.getToDate());
+		    long fromDate = TravelDetail.getLongDate(travelDetail.getFromDate());
+		    int guestCount = travelDetail.getGuestCount();
+			
+			String code = getAID().getLocalName();
+			Class.forName("org.sqlite.JDBC");
+		    Connection conn = DriverManager.getConnection("jdbc:sqlite:data/travelagency.sqlite3");
+		    Statement stat = conn.createStatement();
+		    String stmt = "select * from hotel_details "+
+		    		" where " +
+		    		" code like '%"+code+"%' ";
+		    String address = travelDetail.getToAddress();
+		    String classOfHotel = travelDetail.getClassOfHotel();
+		    String typeOfHotel = travelDetail.getTypeOfHotel();
+		    if(address!=null && address.length()>0)
+	    		stmt += "and address like '%"+address+"%' ";
+		    if(classOfHotel!=null && classOfHotel.length()>0)
+		    		stmt += "and class like '%"+classOfHotel+"%' ";
+		    if(typeOfHotel!=null && typeOfHotel.length()>0)
+	    		stmt += "and type like '%"+typeOfHotel+"%' ";
+		    stmt += " limit 1";
+		    
+		    ResultSet rs = stat.executeQuery(stmt);
+		    while (rs.next()) {
+		    	int id = rs.getInt("id");
+		    	int capacity = rs.getInt("capacity");
+
+		    	boolean roomAvailable = true;
+		    	for(long i=fromDate; i<toDate; i++){
+				    String inner_stmt = " select sum(count) as count from hotel_details_booked "
+				    	+ " where date=" + fromDate + " and id=" +id;
+				    System.out.println("Sql statement - " + inner_stmt);
+				    Statement inner_stat = conn.createStatement();
+				    ResultSet inner_rs = inner_stat.executeQuery(inner_stmt);
+				    while (inner_rs.next()) {
+				    	int count = inner_rs.getInt("count");
+				    	if(count + guestCount > capacity){
+				    		roomAvailable = false;
+				    	}
+				    }
+				    inner_rs.close();
+				    inner_stat.close();
+		    	}
+		    	
+		    	if(roomAvailable){
+			    	hotelDetail = new HotelDetail();
+			    	hotelDetail.setHotelName(rs.getString("name"));
+			    	hotelDetail.setHotelAddr(rs.getString("address"));
+			    	hotelDetail.setHotelClass(rs.getString("class"));
+			    	hotelDetail.setHotelType(rs.getString("type"));
+			    	hotelDetail.setHotelCapacity(capacity);
+			    	hotelDetail.setHotelCost(rs.getInt("cost"));
+			    	hotelDetail.setHotelID(id);
+		    	}
+		    }
+		    rs.close();
+		    conn.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return hotelDetail;
+	}
+
+	private boolean bookHotel(TravelDetail travelDetail) {
+		HotelDetail hotelDetail = travelDetail.getHotelDetail();
+		boolean retVal = true;
+		
+		try {
+			Class.forName("org.sqlite.JDBC");
+		    Connection conn = DriverManager.getConnection("jdbc:sqlite:data/travelagency.sqlite3");
+		    Statement stat = conn.createStatement();
+		    String stmt = new String();
+		    long fromDate = TravelDetail.getLongDate(travelDetail.getFromDate());
+		    long toDate = TravelDetail.getLongDate(travelDetail.getToDate());
+		    
+		    for (long i=fromDate; i<toDate; i++ ){
+			    stmt = "insert into hotel_details_booked(id, date, count) " +
+				    " values (" + hotelDetail.getHotelID() + ", " 
+				    + i + ", " 
+				    + travelDetail.getGuestCount() + " )" ;
+			    stat.addBatch(stmt);
+		    }
+		    stat.executeBatch();
+		    conn.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			retVal = false;
+		}
+		return retVal;
+	}
+	
+	
+	/**
+	 * this method extract a travelDetail data structure from a message
+	 **/
+	public TravelDetail extractTravelDetail(ACLMessage msg) throws FIPAException {
+		try {
+			ContentElement l = getContentManager().extractContent(msg);
+			Action a = (Action) l;
+			return (TravelDetail) a.getAction();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * this method fills an aclmessage with hotelDetail
+	 **/
+	void fillHotelDetailDetail(ACLMessage msg, HotelDetail hotelDetail)
+			throws FIPAException {
+		Action a = new Action();
+		a.setActor(getAID());
+		a.setAction(hotelDetail);
+		try {
+			getContentManager().fillContent(msg, a);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
